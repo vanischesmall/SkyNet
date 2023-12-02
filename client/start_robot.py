@@ -6,6 +6,7 @@ import socket as sc
 import threading
 import time
 import tkinter.filedialog as tkFileDialog
+import InetConnection
 import tkinter as tk
 import cv2
 import zmq

@@ -2,25 +2,29 @@
 __author__ = 'Yuri Glamazdin <yglamazdin@gmail.com>'
 __version__ = '1.6'
 
+import base64
+import json
+import math
+import os
+import pickle
+import platform
+# Create a UDP socket
+import select
 import socket as sc
 import threading
 import time
-import tkinter.filedialog as tkFileDialog
-import InetConnection
 import tkinter as tk
-import cv2
-import zmq
+import tkinter.filedialog as tkFileDialog
+import warnings
 import zlib
-# Create a UDP socket
-import select
-
 from ctypes import *
 from ctypes.util import find_library
-import platform
+
+import cv2
 import numpy as np
-import warnings
-import os
-import pickle, base64
+import zmq
+
+import InetConnection as InetConnection
 
 flag_udp_comand = False
 flag_udp_event = False
@@ -28,7 +32,7 @@ flag_udp_turbo_show_window = False
 flag_udp_show_window = False
 
 show_system_message = False
-fps_fix_timer = 0.04
+fps_fix_timer = 0.02
 
 
 video_show = 0
@@ -1781,106 +1785,6 @@ def OptionMenu_SelectionEvent(event):  # I'm not sure on the arguments here, it 
     pass
 
 
-def mouse_move():
-    global mouse_x, mouse_y
-    import mouse
-
-    try:
-        import win32gui
-    except:
-        os.system('pip install pypiwin32')
-
-    x1 = 0
-    y1 = 0
-    while 1:
-        # x, y = mouse.get_position()
-        try:
-            flags, hcursor, z = win32gui.GetCursorInfo()
-            x = z[0]
-            y = z[1]
-            # print(x,y)
-
-            if x1 != x or y1 != y:
-                # send_event(data)
-                x1 = x
-                y1 = y
-                mouse_x = x
-                mouse_y = y
-                # print("mouse", x,y)
-        except:
-            pass
-        time.sleep(0.05)
-
-
-if MOUSE_FLAG:
-    my_thread_mouse = threading.Thread(target=mouse_move)
-    my_thread_mouse.daemon = True
-    my_thread_mouse.start()
-
-
-def joy_move():
-    global joy_x, joy_y, joy_data, last_joy_activ
-    x = 1
-    y = 1
-    joy_data_old = []
-
-    while 1:
-        pygame.event.get()
-        # Get count of joysticks
-        joystick_count = pygame.joystick.get_count()
-        # print("count", joystick_count)
-        if joystick_count > 0:
-
-            joystick = pygame.joystick.Joystick(0)
-            joystick.init()
-
-            # 0 газ
-            # joy_x1 = joystick.get_axis(2)
-            # joy_y1 = joystick.get_axis(1)
-
-            joy_data_temp = []
-            # print(joystick.get_numbuttons())
-
-            for i in range(0, joystick.get_numaxes()):
-                joy_data_temp.append(int(np.interp(joystick.get_axis(i), [-1, 1], [1000, 2000])))
-            for i in range(0, joystick.get_numbuttons()):
-                joy_data_temp.append(joystick.get_button(i))
-
-            if len(joy_data_old) == 0:
-                joy_data_old = joy_data_temp
-            # print(joy_data_temp)
-
-            # в течении n секунд выдаем люую активность, потом только по изменению
-            if time.time() < last_joy_activ + 1:
-                joy_data = joy_data_temp.copy()
-                # print(joy_data)
-            else:
-                if joy_data_old != joy_data_temp:
-                    joy_data = joy_data_temp.copy()
-                    last_joy_activ = time.time()
-
-                joy_data_old = joy_data_temp
-
-            # joy_data = joy_data_temp.copy()
-            # print(joystick.get_axis(3))
-
-            # if x != joy_x1 or y != joy_y1:
-            #     # send_event(data)
-            #     x = joy_x1
-            #     y = joy_y1
-            #     joy_x = np.interp(joy_x1, [-1, 1], [-255, 255])
-            #     joy_y = np.interp(joy_y1, [-1, 1], [-255, 255])
-            #     #print((joy_x, joy_y))
-            #     continue
-
-        time.sleep(0.05)
-        # return joystick.get_axis(0), joystick.get_axis(1)
-
-
-if JOYSTIK_FLAG:
-    my_thread_joy = threading.Thread(target=joy_move)
-    my_thread_joy.daemon = True
-    my_thread_joy.start()
 
 
 def make_dataset():
@@ -1981,11 +1885,6 @@ def send_event():
             key_started = 1
             break
 
-    try:
-        import win32api
-    except:
-        print("need install win32api: pip install pypiwin32 ")
-        os.system('pip install pypiwin32')
 
     timer_send = time.time()
     while 1:
@@ -2004,6 +1903,7 @@ def send_event():
 
         data_all = []
 
+
         if key_pressed != 0:
             # data = key_pressed
             data_all.append(key_pressed)
@@ -2012,7 +1912,7 @@ def send_event():
         if mouse_x != -1 and mouse_y != -1:
             # print("send mouse", mouse_x, mouse_y)
             # data = "m," + str(mouse_x) + "," + str(mouse_y)
-            data_all.append("m," + str(mouse_x) + "," + str(mouse_y))
+            # data_all.append("m," + str(mouse_x) + "," + str(mouse_y))
             mouse_x = -1
             mouse_y = -1
 
@@ -2022,7 +1922,7 @@ def send_event():
             ds = "j,"
             for i in joy_data:
                 ds += str(i) + ","
-            data_all.append(ds[:-1])
+            # data_all.append(ds[:-1])
             # print("joy", data)
             joy_data = []
             # data = "j," + str(round(joy_x, 2)) + "," + str(round(joy_y, 2))
@@ -2301,9 +2201,9 @@ def printt(text, fg='black', bg='white'):
 # my_thread.daemon = True
 # my_thread.start()
 
-print("Start robot api")
+print("Start robot API")
 
-printt("Start robot api", fg='green')
+printt("Start robot API", fg='green')
 
 
 def popup_bonus():
@@ -2370,7 +2270,10 @@ dropVar = tk.StringVar()
 dropVar.set("Connect to robot")
 dropVar_inet = tk.StringVar()
 dropVar_inet.set("Connect to robot")
-list_combobox.append(["8", "192.168.1.43", "robot", "l"])
+
+list_combobox.append(["8", "192.168.1.1", "MEGA", "l"])
+#list_combobox.append(["8", "192.168.137.254", "robot", "l"])
+
 list_combobox.append(["scan_inet", " "])
 list_combobox_inet.append(["scan_inet", " "])
 

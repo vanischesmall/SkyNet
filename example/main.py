@@ -1,5 +1,7 @@
+import time
+
+import serial
 from api import RobotAPI
-import serial, time
 
 uart = serial.Serial("/dev/ttyS3", baudrate=9600, stopbits=serial.STOPBITS_ONE)
 
@@ -40,11 +42,11 @@ def read_uart():
         str: The received package.
     """
     if uart.in_waiting > 0:
-        pkg, dead_tmr = '', tim
+        pkg, dead_tmr = "", tim
         while True:
-            char = str(uart.read(), 'utf-8')
+            char = str(uart.read(), "utf-8")
 
-            if char == ";":
+            if char == "$":
                 return pkg
             if tim > dead_tmr + 0.02:
                 break
@@ -57,10 +59,15 @@ if __name__ == "__main__":
     frame = robot.get_frame(wait_new_frame=1)  # Get a frame from the robot's camera
 
     tim = time.time()  # Update the current time
-    message = 'Hello, average SkyNet enjoyer!'  # Define a message to send via UART
+    message = "Hello, average SkyNet enjoyer!"  # Define a message to send via UART
 
     write_uart(message)  # Send the message via UART
 
     fps()  # Update the frames per second count
-    robot.text_to_frame(frame, frames, 150, 20)  # Add text to the frame, displaying the frames per second count
-    robot.set_frame(frame, 40)  # Set the frame on the robot's display with a brightness level of 40
+    robot.text_to_frame(
+        frame, frames, 150, 20
+    )  # Add text to the frame, displaying the frames per second count
+    robot.set_frame(
+        frame, 40
+    )  # Set the frame on the robot's display with a brightness level of 40
+
